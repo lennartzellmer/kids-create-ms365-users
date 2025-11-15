@@ -1,0 +1,2 @@
+Name,Surname,UserPrincipalName,ForwardTo,TargetGroupMailAddress,StreetAddress,PostalCode,City,MobilePhone
+Max,Müstermann,max.muestermann@kids-bonn.de,max.muestermann@example.com,testgruppe@kids-bonn.de,Test Str. 35,12345,Bonn,0123-4567890
