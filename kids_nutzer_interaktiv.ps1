@@ -3,7 +3,7 @@
 Creates a single Microsoft 365 user from interactive prompts and configures licensing, password reset contact, and email forwarding.
 
 .DESCRIPTION
-Prompts for user details (name, surname, email, alternate email, address information) at runtime, creates the account in Microsoft 365 by using
+Prompts for user details (name, surname, email, alternate email, address information, kids) at runtime, creates the account in Microsoft 365 by using
 the Microsoft Graph PowerShell SDK, assigns the Microsoft 365 Business Essentials (O365_BUSINESS_ESSENTIALS) license, registers the alternate
 email address for self-service password reset, and enables email forwarding to the alternate address while retaining a copy in the mailbox.
 
@@ -150,6 +150,7 @@ function Get-InteractiveUserData {
         PostalCode            = Prompt-ForField -Prompt 'PostalCode (optional)'
         City                  = Prompt-ForField -Prompt 'City (optional)'
         MobilePhone           = Prompt-ForField -Prompt 'MobilePhone (optional)'
+        Kids                  = Prompt-ForField -Prompt 'Kids (optional)'
     }
 
     return $userData
@@ -397,6 +398,10 @@ try {
     $postalCode = $userInput.PostalCode
     $city = $userInput.City
     $mobilePhone = $userInput.MobilePhone
+    $kids = $userInput.Kids
+    if ($kids) {
+        $kids = ($kids -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) -join ' & '
+    }
     $targetGroupMailAddress = $userInput.TargetGroupMailAddress
 
     if (-not $firstName -or -not $lastName -or -not $userPrincipalName) {
@@ -464,6 +469,11 @@ try {
         }
         if ($mobilePhone) {
             $creationParams.MobilePhone = $mobilePhone
+        }
+        if ($kids) {
+            $creationParams.OnPremisesExtensionAttributes = @{
+                ExtensionAttribute1 = $kids
+            }
         }
 
         $newUser = New-MgUser @creationParams

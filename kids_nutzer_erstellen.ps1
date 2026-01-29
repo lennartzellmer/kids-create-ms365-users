@@ -3,7 +3,7 @@
 Creates Microsoft 365 users from a CSV file and configures licensing, password reset contact, and email forwarding.
 
 .DESCRIPTION
-Reads user details (name, surname, email, alternate email) from a CSV file, creates the accounts in Microsoft 365 by using the Microsoft Graph
+Reads user details (name, surname, email, alternate email, kids) from a CSV file, creates the accounts in Microsoft 365 by using the Microsoft Graph
 PowerShell SDK, assigns the Microsoft 365 Business Essentials (O365_BUSINESS_ESSENTIALS) license, registers the alternate email address for
 self-service password reset, and enables email forwarding to the alternate address while retaining a copy in the mailbox.
 
@@ -11,7 +11,7 @@ The script requires the Microsoft Graph modules (`Microsoft.Graph.Authentication
 `Microsoft.Graph.Identity.DirectoryManagement`, `Microsoft.Graph.Identity.SignIns`) and the `ExchangeOnlineManagement` module.
 
 .PARAMETER CsvPath
-Path to the CSV file containing user entries. Required columns are Name, Surname, UserPrincipalName, and TargetGroupMailAddress. Optional columns include ForwardTo, StreetAddress, PostalCode, City, and MobilePhone.
+Path to the CSV file containing user entries. Required columns are Name, Surname, UserPrincipalName, and TargetGroupMailAddress. Optional columns include ForwardTo, StreetAddress, PostalCode, City, MobilePhone, and Kids.
 
 .EXAMPLE
 PS> .\kids_nutzer_erstellen.ps1 -CsvPath .\users.csv
@@ -389,6 +389,10 @@ try {
         $postalCode = Get-TrimmedValue -Record $row -PropertyName 'PostalCode'
         $city = Get-TrimmedValue -Record $row -PropertyName 'City'
         $mobilePhone = Get-TrimmedValue -Record $row -PropertyName 'MobilePhone'
+        $kids = Get-TrimmedValue -Record $row -PropertyName 'Kids'
+        if ($kids) {
+            $kids = ($kids -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) -join ' & '
+        }
         $rowTargetGroupMailAddress = Get-TrimmedValue -Record $row -PropertyName 'TargetGroupMailAddress'
 
         if (-not $firstName -or -not $lastName -or -not $userPrincipalName) {
@@ -475,6 +479,11 @@ try {
             }
             if ($mobilePhone) {
                 $creationParams.MobilePhone = $mobilePhone
+            }
+            if ($kids) {
+                $creationParams.OnPremisesExtensionAttributes = @{
+                    ExtensionAttribute1 = $kids
+                }
             }
 
             $newUser = New-MgUser @creationParams
